@@ -10,6 +10,9 @@ class Home extends StatefulWidget {
 }
 
 class HomeState extends State<Home> {
+  final TextEditingController taskController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  List<String> _tasks = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,31 +24,60 @@ class HomeState extends State<Home> {
         padding: const EdgeInsets.all(10),
         child: Column(
           children: <Widget>[
-            Form(
-                child: Row(
-              children: [
-                Expanded(
-                    child: TextFormField(
-                  style: const TextStyle(fontSize: 18, color: Colors.black87),
-                  decoration: const InputDecoration(
-                      hintText: 'Crie uma nova tarefa aqui...',
-                      hintStyle: TextStyle(fontSize: 15)),
-                  keyboardType: TextInputType.text,
-                )),
-                Container(
-                    margin: const EdgeInsets.only(left: 15),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.green),
-                      onPressed: () {},
-                      child: const Text(
-                        'Add',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                    ))
-              ],
-            ))
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              child: Form(
+                  key: _formKey,
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: TextFormField(
+                        controller: taskController,
+                        style: const TextStyle(
+                            fontSize: 18, color: Colors.black87),
+                        decoration: const InputDecoration(
+                            hintText: 'Crie uma nova tarefa aqui...',
+                            hintStyle: TextStyle(fontSize: 15)),
+                        keyboardType: TextInputType.text,
+                        validator: (value) {
+                          if (value!.trim().isEmpty) {
+                            return 'Campo de input necessário';
+                          }
+                          return null;
+                        },
+                      )),
+                      Container(
+                          margin: const EdgeInsets.only(left: 15),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.green),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                setState(() {
+                                  _tasks.add(taskController.text);
+                                });
+                                taskController.clear();
+                              }
+                            },
+                            child: const Text(
+                              'Add',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ))
+                    ],
+                  )),
+            ),
+            Expanded(
+              child: ListView.builder(
+                  itemCount: _tasks.length,
+                  itemBuilder: (context, index) {
+                    return Card(
+                        child: ListTile(
+                      title: Text(_tasks[index]),
+                    ));
+                  }),
+            )
           ],
         ),
       ),
