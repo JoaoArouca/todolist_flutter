@@ -55,6 +55,7 @@ class HomeState extends State<Home> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.pushNamed(context, 'list-page', arguments: tasklist);
+          // Navigator.pop(context);
         },
         label: const Text('Lista de Tarefas'),
         backgroundColor: Colors.pink,
