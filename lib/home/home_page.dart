@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
-import "package:provider/provider.dart";
-import "package:todo_app/configs/app_settings.dart";
+import "package:shared_preferences/shared_preferences.dart";
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -14,18 +13,37 @@ class Home extends StatefulWidget {
 class HomeState extends State<Home> {
   final TextEditingController taskController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  // ignore: prefer_final_fields
-  // late List<String> task = [];
-  late Map<String, List<String>> db;
+  SharedPreferences? prefs;
+  List<String> tasklist = [];
 
-  readDatabase() {
-    db = context.watch<AppSettings>().database;
+  @override
+  void initState() {
+    super.initState();
+    initSharedPreferences();
+    readDatabase();
+  }
+
+  Future<void> initSharedPreferences() async {
+    prefs ??= await SharedPreferences.getInstance();
+    readDatabase();
+    // readDatabase();
+  }
+
+  List<String> readDatabase() {
+    tasklist = prefs?.getStringList('tasks') ?? [];
+    return tasklist;
+  }
+
+  Future<void> saveDatabase(String task) async {
+    List<String> list = readDatabase();
+    list.add(task);
+    await prefs?.setStringList('tasks', list);
+    tasklist = readDatabase();
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    readDatabase();
-    final tasklist = db['tasks'] ?? [];
     return Scaffold(
       appBar: AppBar(
         title: const Text('To Do App'),
@@ -36,7 +54,6 @@ class HomeState extends State<Home> {
       body: _body(tasklist),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Adicione aqui a ação que será executada quando o botão for pressionado.
           Navigator.pushNamed(context, 'list-page', arguments: tasklist);
         },
         label: const Text('Lista de Tarefas'),
@@ -47,7 +64,7 @@ class HomeState extends State<Home> {
     );
   }
 
-  _body(List<String> tasklist) {
+  _body(List<String>? tasklist) {
     return Container(
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -82,13 +99,9 @@ class HomeState extends State<Home> {
                               backgroundColor: Colors.lightGreen),
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              setState(() {
-                                tasklist.add(taskController.text);
-                              });
-                              await context
-                                  .read<AppSettings>()
-                                  .setLocale(tasklist);
+                              saveDatabase(taskController.text);
                               taskController.clear();
+                              setState(() {});
                             }
                           },
                           child: const Icon(Icons.add_task),
@@ -98,12 +111,12 @@ class HomeState extends State<Home> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: tasklist.length,
+              itemCount: tasklist?.length ?? 0,
               itemBuilder: (context, index) {
-                final task = tasklist[index];
+                final task = tasklist?[index] ?? '';
                 return GestureDetector(
                   onTap: () {
-                    print(task);
+                    debugPrint(task);
                   },
                   child: Card(
                     child: ListTile(
@@ -114,26 +127,6 @@ class HomeState extends State<Home> {
               },
             ),
           ),
-          // Expanded(
-          //   child:
-          //       Consumer<AppSettings>(builder: (context, appSettings, child) {
-          //     final taskList = appSettings.database['tasks'] ?? [];
-          //     return ListView.builder(
-          //         itemCount: taskList.length,
-          //         itemBuilder: (context, index) {
-          //           final task = taskList[index];
-          //           return GestureDetector(
-          //             onTap: () {
-          //               print(task[index]);
-          //             },
-          //             child: Card(
-          //                 child: ListTile(
-          //               title: Text(task[index]),
-          //             )),
-          //           );
-          //         });
-          //   }),
-          // )
         ],
       ),
     );
